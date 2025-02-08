@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ImageBackground, TextInput, Button, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ImageBackground, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import CurrentWeather from './components/CurrentWeather';
@@ -12,12 +12,12 @@ export default function App() {
 
     useEffect(() => {
         (async () => {
-            let { status } = await Location.requestForegroundPermissionsAsync();
+            const { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
                 console.log('Permission denied');
                 return;
             }
-            let currentLocation = await Location.getCurrentPositionAsync({});
+            const currentLocation = await Location.getCurrentPositionAsync({});
             setLocation(currentLocation);
             fetchWeather(currentLocation.coords.latitude, currentLocation.coords.longitude);
         })();
@@ -36,16 +36,26 @@ export default function App() {
 
     return (
         <ImageBackground source={require('./assets/background.jpg')} style={styles.container}>
-            <View style={styles.inner}>
-                <TextInput placeholder="Enter city" value={city} onChangeText={setCity} style={styles.input} />
-                <Button title="Search" onPress={searchCity} />
-                {weatherData && (
-                    <>
-                        <CurrentWeather data={weatherData} />
-                        <ForecastWeather data={weatherData} />
-                    </>
-                )}
+            <View style={styles.overlay} />
+            <View style={styles.searchContainer}>
+                <TextInput
+                    placeholder="Entre le nom de la cité"
+                    placeholderTextColor="#FFFFFF" 
+                    value={city}
+                    onChangeText={setCity}
+                    style={styles.input}
+                />
+                <TouchableOpacity style={styles.button} onPress={searchCity}>
+                    <Text style={styles.buttonText}>Search</Text>
+                </TouchableOpacity>
             </View>
+            {weatherData && (
+                <>
+                    <Text style={styles.cityName}>{weatherData.city.name}</Text>
+                    <CurrentWeather data={weatherData} />
+                    <ForecastWeather data={weatherData} />
+                </>
+            )}
         </ImageBackground>
     );
 }
@@ -53,15 +63,50 @@ export default function App() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        justifyContent: 'flex-start',
+        alignItems: 'center',
     },
-    inner: {
-        padding: 20,
+    overlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Opacité de 50%
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 50,
+        width: '90%',
+        zIndex: 1, // Assurez-vous que le conteneur de recherche est au-dessus de l'overlay
     },
     input: {
         height: 40,
+        color: 'white',
         borderColor: 'gray',
         borderWidth: 1,
-        marginBottom: 10,
+        marginRight: 10,
         paddingHorizontal: 10,
+        flex: 1,
+    },
+    button: {
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderColor: 'gray',
+        borderWidth: 1,
+        backgroundColor: 'transparent',
+        borderRadius: 5,
+        paddingHorizontal: 10,
+    },
+    buttonText: {
+        color: 'white',
+    },
+    cityName: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginTop: 20,
+        color: 'white', // Couleur du nom de la ville
     },
 });
